@@ -40,9 +40,35 @@ public:
 	};
 	image(YUV_Image_t YUV_image) {
 		uint32_t image_size = YUV_image.pixels_hight * YUV_image.pixels_width;
-		YUV_image.Y_buff = new int16_t[image_size];
-		YUV_image.U_buff = new int16_t[image_size];
-		YUV_image.V_buff = new int16_t[image_size];
+		YUV_image_in.Y_buff = new int16_t[image_size];
+		YUV_image_in.U_buff = new int16_t[image_size];
+		YUV_image_in.V_buff = new int16_t[image_size];
+		RGB_image_out.R_buff = new uint8_t[image_size];
+		RGB_image_out.G_buff = new uint8_t[image_size];
+		RGB_image_out.B_buff = new uint8_t[image_size];
+		//init values 
+		uint32_t i;
+		for (i = 0; i < image_size; i++) {
+			YUV_image_in.Y_buff[i] = 0;
+			YUV_image_in.U_buff[i] =0;
+			YUV_image_in.V_buff[i] = 0;
+			RGB_image_out.R_buff[i] = 0;
+			RGB_image_out.G_buff[i] = 0;
+			RGB_image_out.B_buff[i] = 0;
+		}
+
+		YUV_image_in.Y_size_bytes = image_size;
+		YUV_image_in.U_size_bytes = image_size;
+		YUV_image_in.V_size_bytes = image_size;
+		YUV_image_in.pixels_hight = YUV_image.pixels_hight;
+		YUV_image_in.pixels_width = YUV_image.pixels_width;
+		pixels_hight = YUV_image.pixels_hight;
+		pixels_width = YUV_image.pixels_width;
+		
+
+		RGB_image_out.pixels_hight = pixels_hight;
+		RGB_image_out.pixels_width = pixels_width;
+		RGB_image_out.pixel_size = pixel_size;
 	}
 	;
 

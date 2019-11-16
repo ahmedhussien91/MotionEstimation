@@ -12,6 +12,11 @@ typedef struct motion_vector_t {
 	uint32_t number_of_vectors; 
 };
 
+typedef enum matching_type_e {
+	MAD,
+	PSNR
+};
+
 typedef struct window_conf_t {
 	uint16_t block_width;
 	uint16_t block_hight;
@@ -21,10 +26,6 @@ typedef struct window_conf_t {
 
 };
 
-typedef enum matching_type_e {
-	MAD,
-	PSNR
-};
 class window
 {
 public:
@@ -34,13 +35,16 @@ public:
 	uint32_t get_middle_block_index(uint32_t window_index);
 	uint32_t get_block_index(uint32_t window_index, uint32_t index_inside_win);
 	void get_block(uint32_t offset, int16_t * block, image* image_input);
+	void get_block_U(uint32_t offset, int16_t* block, image* image_input);
+	void get_block_V(uint32_t offset, int16_t* block, image* image_input);
+	void write_block(uint32_t block_offset_output, uint32_t block_offset_input, image* output_image, image* image_input);
 	uint32_t get_distance_between_blocks(uint32_t index_1,uint32_t index_2);
 	// void rearrange_array(int16_t* arr_1D);
 	float_t MAD_Calc(int16_t* image_block, int16_t* next_image_block);
 	float_t MSE_Calc(int16_t* image_block, int16_t* next_image_block);
 	float_t PSNR_Calc(int16_t* image_block, int16_t* next_image_block);
 
-	motion_vector_t vector;
+	motion_vector_t motion_vector;
 
 private:
 	int16_t** image_o_blocks;
@@ -52,10 +56,11 @@ private:
 	uint32_t no_of_blocks_win_width;
 	uint32_t no_of_blocks_win_hight;
 	uint32_t no_of_blocks_win;
+	uint32_t no_of_blocks_image_width;
+	uint32_t no_of_blocks_image_hight;
 	uint32_t block_size;
 	window_conf_t* m_win_conf;
 	image* m_image_o;
 	image* m_next_image;
-	motion_vector_t motion_vector;
 };
 
