@@ -17,6 +17,8 @@
 	 uint32_t block_anchor;
 	 int16_t* t_block = new int16_t[m_block_size];
 	 int16_t* t_1_block = new int16_t[m_block_size];
+	 float Error[5];
+	 uint32_t Errors_count = 0;
 	 for (uint32_t i = 0; i < m_num_of_blocks; i++)
 	 {
 		 /* Exclude blocks at the edge */
@@ -26,6 +28,8 @@
 			 (i>((m_image_width * m_image_hight)- m_image_width))) {
 			 continue;
 		 }
+
+
 		 /*get block of values from t-image*/
 		 block_anchor = (i % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
 		 get_block(block_anchor, t_block, image_o);
@@ -35,6 +39,100 @@
 		 get_block(block_anchor, t_1_block, next_image);
 
 		 /*match two blocks @ (0,0) */ 
+		 switch (tss_conf->matching_type)
+		 {
+		 case MAD:
+			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
+			 break;
+		 case PSNR:
+			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
+			 break;
+
+		 default:
+			 _ASSERT(false);
+			 break;
+		 }
+		 Errors_count++;
+
+		 /*get block of values from t+1 image*/
+		 block_anchor = ((i+tss_conf->step_1) % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
+		 get_block(block_anchor, t_1_block, next_image);
+
+		 /*match two blocks @ (0,step_1) */
+		 switch (tss_conf->matching_type)
+		 {
+		 case MAD:
+			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
+			 break;
+		 case PSNR:
+			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
+			 break;
+
+		 default:
+			 _ASSERT(false);
+			 break;
+		 }
+		 Errors_count++;
+
+		 /*get block of values from t+1 image*/
+		 block_anchor = ((i - tss_conf->step_1) % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
+		 get_block(block_anchor, t_1_block, next_image);
+
+		 /*match two blocks @ (0,-step_1) */
+		 switch (tss_conf->matching_type)
+		 {
+		 case MAD:
+			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
+			 break;
+		 case PSNR:
+			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
+			 break;
+
+		 default:
+			 _ASSERT(false);
+			 break;
+		 }
+		 Errors_count++;
+
+		 /*get block of values from t+1 image*/
+		 block_anchor = (i % numofblocks_in_width) + (((i - (i % numofblocks_in_width)) / numofblocks_in_width)+ tss_conf->step_1) * m_block_hight * m_image_width;
+		 get_block(block_anchor, t_1_block, next_image);
+
+		 /*match two blocks @ (step_1,0) */
+		 switch (tss_conf->matching_type)
+		 {
+		 case MAD:
+			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
+			 break;
+		 case PSNR:
+			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
+			 break;
+
+		 default:
+			 _ASSERT(false);
+			 break;
+		 }
+		 Errors_count++;
+
+		 /*get block of values from t+1 image*/
+		 block_anchor = (i % numofblocks_in_width) + (((i - (i % numofblocks_in_width)) / numofblocks_in_width) + tss_conf->step_1) * m_block_hight * m_image_width;
+		 get_block(block_anchor, t_1_block, next_image);
+
+		 /*match two blocks @ (step_1,0) */
+		 switch (tss_conf->matching_type)
+		 {
+		 case MAD:
+			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
+			 break;
+		 case PSNR:
+			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
+			 break;
+
+		 default:
+			 _ASSERT(false);
+			 break;
+		 }
+		 Errors_count++;
 
 
 	 }

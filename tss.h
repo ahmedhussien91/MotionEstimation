@@ -1,12 +1,18 @@
 #pragma once
 #include "image.h"
 
+typedef enum matching_type_e {
+	MAD,
+	PSNR
+};
+
 typedef struct tss_conf_t {
 	uint32_t block_width;
 	uint32_t block_hight;
 	uint32_t step_1;
 	uint32_t step_2;
 	uint32_t step_3;
+	matching_type_e matching_type;
 };
 
 typedef struct block_motion_vector_t {
