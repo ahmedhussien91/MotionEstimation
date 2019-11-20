@@ -43,9 +43,6 @@ window::window(image* image_o, image* next_image, window_conf_t* win_conf) {
 	/* calculate num_of_windows */
 	// block change every 1 pixel - (block_hight-1)*windows_width
 	no_of_pixels_win = (m_win_conf->window_hight *m_win_conf->window_width)-((m_win_conf->block_width-1) * m_win_conf->window_hight)- ((m_win_conf->block_hight - 1) * m_win_conf->window_width);
-	no_of_windows_in_width = (m_next_image->pixels_width / m_win_conf->window_width); //+ (2*(uint32_t)(m_win_conf->window_width/2));
-	no_of_windows_in_hight = m_next_image->pixels_hight / m_win_conf->window_hight; //+ (2 * (uint32_t)(m_win_conf->window_hight / 2));
-	no_of_windows = no_of_windows_in_hight * no_of_windows_in_width;
 	no_of_blocks_win_width = m_win_conf->window_width / m_win_conf->block_width;
 	no_of_blocks_win_hight = m_win_conf->window_hight / m_win_conf->block_hight;
 	no_of_blocks_win = no_of_blocks_win_width * no_of_blocks_win_hight;
@@ -72,6 +69,7 @@ window::window(image* image_o, image* next_image, window_conf_t* win_conf) {
 		{ // wrong index not found 
 			_ASSERT(false);
 		}
+
 
 		/*loop on blocks in the window - blocks move 1 pixel*/
 		uint32_t j = 0;
@@ -141,7 +139,7 @@ uint32_t window::get_win_index(uint32_t window_index) {
 
 uint32_t window::get_middle_block_index(uint32_t window_index) {
 	uint32_t index = 0;
-	uint32_t middle_h_off, middle_w_off;
+	float middle_h_off, middle_w_off;
 
 	middle_w_off = no_of_blocks_win_width/2;
 	middle_h_off = no_of_blocks_win_hight/2;

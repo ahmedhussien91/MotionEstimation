@@ -5,6 +5,7 @@
 #include "image.h"
 #include "util.h"
 #include "window.h"
+#include "tss.h"
 
 
 int main()
@@ -27,12 +28,13 @@ int main()
 	//util_1.calculateSNR(image_2.YUV_image_in, image_2.YUV_image_out, "lena_color YUV");
 	util_1.write_raw_image(image_2.RGB_image_out, "color_pencils_big_frame_on_dark0007.raw");
 	util_1.write_raw_image(image_1.RGB_image_out, "color_pencils_big_frame_on_dark0006.raw");
-	      
+	   
+	/*Window Configu*/
 	window_conf_t win_conf; 
-	win_conf.block_width = 9;
-	win_conf.block_hight = 8;
-	win_conf.window_width = 5*9; // multiple of block width
-	win_conf.window_hight = 8*8; // multiple of block hight 
+	win_conf.block_width = 8;
+	win_conf.block_hight = 9;
+	win_conf.window_width = 8 * 8; // multiple of block width
+	win_conf.window_hight = 5 * 9; // multiple of block hight 
 	win_conf.matching_type = MAD;
 
 	window window1 = window(&image_1, &image_2, &win_conf);
@@ -47,8 +49,31 @@ int main()
 		window1.write_block(window1.motion_vector.block_motion_vector_array[idx].block_index, window1.motion_vector.block_motion_vector_array[idx].original_block_index, &motion_vector_image, &image_2);
 	}
 	motion_vector_image.convertYUVtoRGB();
-	util_1.write_raw_image(motion_vector_image.RGB_image_out, "motion_vector_image.raw");
+	util_1.write_raw_image(motion_vector_image.RGB_image_out, "window_motion_vector_image.raw");
 	
+	/*Tss Conf */
+	tss_conf_t tss_conf;
+	tss_conf.block_width = 8;
+	tss_conf.block_hight = 9;
+	tss_conf.matching_type = TSS_MAD;
+	tss_conf.step[0] = 4;
+	tss_conf.step[1] = 2;
+	tss_conf.step[2] = 1;
+
+	tss tss_1 = tss(&image_1, &image_2, &tss_conf);
+	//reconstruct from motion vector only
+	YUV_Image_t tss_OutputImage;
+	tss_OutputImage.pixels_hight = image_1.pixels_hight;
+	tss_OutputImage.pixels_width = image_1.pixels_width;
+	image tss_motion_vector_image = image(tss_OutputImage);
+	for (idx = 0; idx < tss_1.motion_vector.number_of_vectors; idx++)
+	{
+		uint32_t block_index = tss_1.motion_vector.block_motion_vector_array[idx].original_block_index + tss_1.motion_vector.block_motion_vector_array[idx].offset.x + tss_1.motion_vector.block_motion_vector_array[idx].offset.y * image_2.pixels_width;
+		window1.write_block(block_index, tss_1.motion_vector.block_motion_vector_array[idx].original_block_index, &tss_motion_vector_image, &image_2);
+	}
+	tss_motion_vector_image.convertYUVtoRGB();
+	util_1.write_raw_image(tss_motion_vector_image.RGB_image_out, "tss_motion_vector_image.raw");
+
 
     std::cout << "Hello World!\n";
 }

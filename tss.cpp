@@ -1,5 +1,8 @@
 #include "tss.h"
 
+pos_t loop_pos[] = { {0,0}, {0,1},{0,-1},{1,0},{-1,0} };
+uint8_t loop_pos_count = 5;
+
  tss :: tss(image* image_o, image* next_image, tss_conf_t* tss_conf) {
 	 m_block_hight = tss_conf->block_hight;
 	 m_block_width = tss_conf->block_width;
@@ -11,132 +14,80 @@
 	 uint32_t numofblocks_in_width = m_image_width / m_block_width;
 	 uint32_t numofblocks_in_hight = m_image_hight / m_block_hight;
 
-	 motion_vector.number_of_vectors = m_num_of_blocks - 2 * numofblocks_in_width - 2 * numofblocks_in_hight;
+	 motion_vector.number_of_vectors = m_num_of_blocks - 2 * numofblocks_in_width - 2 * numofblocks_in_hight +4;
+	 motion_vector.block_motion_vector_array = new tss_block_motion_vector_t[motion_vector.number_of_vectors];
 
 	 /*loop on image blocks*/
 	 uint32_t block_anchor;
 	 int16_t* t_block = new int16_t[m_block_size];
 	 int16_t* t_1_block = new int16_t[m_block_size];
-	 float Error[5];
-	 uint32_t Errors_count = 0;
+	 uint32_t motion_idx = 0;
 	 for (uint32_t i = 0; i < m_num_of_blocks; i++)
 	 {
 		 /* Exclude blocks at the edge */
 		 if ((i < numofblocks_in_width) ||
 			 (i%numofblocks_in_width == 0) ||
 			 (i%numofblocks_in_width == (numofblocks_in_width-1)) ||
-			 (i>((m_image_width * m_image_hight)- m_image_width))) {
+			 (i > ((numofblocks_in_width * numofblocks_in_hight)- numofblocks_in_width))) {
 			 continue;
 		 }
 
-
-		 /*get block of values from t-image*/
-		 block_anchor = (i % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
-		 get_block(block_anchor, t_block, image_o);
-
-		 /*get block of values from t+1 image*/
-		 block_anchor = (i % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
-		 get_block(block_anchor, t_1_block, next_image);
-
-		 /*match two blocks @ (0,0) */ 
-		 switch (tss_conf->matching_type)
-		 {
-		 case MAD:
-			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
-			 break;
-		 case PSNR:
-			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
-			 break;
-
-		 default:
-			 _ASSERT(false);
-			 break;
-		 }
-		 Errors_count++;
-
-		 /*get block of values from t+1 image*/
-		 block_anchor = ((i+tss_conf->step_1) % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
-		 get_block(block_anchor, t_1_block, next_image);
-
-		 /*match two blocks @ (0,step_1) */
-		 switch (tss_conf->matching_type)
-		 {
-		 case MAD:
-			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
-			 break;
-		 case PSNR:
-			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
-			 break;
-
-		 default:
-			 _ASSERT(false);
-			 break;
-		 }
-		 Errors_count++;
-
-		 /*get block of values from t+1 image*/
-		 block_anchor = ((i - tss_conf->step_1) % numofblocks_in_width) + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
-		 get_block(block_anchor, t_1_block, next_image);
-
-		 /*match two blocks @ (0,-step_1) */
-		 switch (tss_conf->matching_type)
-		 {
-		 case MAD:
-			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
-			 break;
-		 case PSNR:
-			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
-			 break;
-
-		 default:
-			 _ASSERT(false);
-			 break;
-		 }
-		 Errors_count++;
-
-		 /*get block of values from t+1 image*/
-		 block_anchor = (i % numofblocks_in_width) + (((i - (i % numofblocks_in_width)) / numofblocks_in_width)+ tss_conf->step_1) * m_block_hight * m_image_width;
-		 get_block(block_anchor, t_1_block, next_image);
-
-		 /*match two blocks @ (step_1,0) */
-		 switch (tss_conf->matching_type)
-		 {
-		 case MAD:
-			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
-			 break;
-		 case PSNR:
-			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
-			 break;
-
-		 default:
-			 _ASSERT(false);
-			 break;
-		 }
-		 Errors_count++;
-
-		 /*get block of values from t+1 image*/
-		 block_anchor = (i % numofblocks_in_width) + (((i - (i % numofblocks_in_width)) / numofblocks_in_width) + tss_conf->step_1) * m_block_hight * m_image_width;
-		 get_block(block_anchor, t_1_block, next_image);
-
-		 /*match two blocks @ (step_1,0) */
-		 switch (tss_conf->matching_type)
-		 {
-		 case MAD:
-			 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
-			 break;
-		 case PSNR:
-			 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
-			 break;
-
-		 default:
-			 _ASSERT(false);
-			 break;
-		 }
-		 Errors_count++;
+		/*get block of values from t-image*/
+		block_anchor = (i % numofblocks_in_width)*m_block_width + ((i - (i % numofblocks_in_width)) / numofblocks_in_width) * m_block_hight * m_image_width;
+		motion_vector.block_motion_vector_array[motion_idx].original_block_index = block_anchor;
+		get_block(block_anchor, t_block, image_o);
 
 
+		/* 3- steps */
+		pos_t min_pos = { 0,0 };
+		float Error[5];
+		float min_error = 0xFFFFFFF;
+		uint8_t min_error_idx = 0;
+		for (uint8_t j = 0; j < 3; j++) {
+			 /*4- movments */
+			 uint32_t Errors_count = 0;
+			 for (uint8_t idx = 0; idx < loop_pos_count; idx++) {
+				 /*get block of values from t+1 image*/
+				 block_anchor = ((i % numofblocks_in_width)* m_block_width + (tss_conf->step[j] * loop_pos[idx].x + min_pos.x ))+ /*width*/
+						((((i - (i % numofblocks_in_width)) / numofblocks_in_width))* m_block_hight * m_image_width + (tss_conf->step[j] * loop_pos[idx].y + min_pos.y)*m_image_width); /*hight*/
+				 get_block(block_anchor, t_1_block, next_image);
+
+				 /*match two blocks @ (0,step_1) */
+				 switch (tss_conf->matching_type)
+				 {
+				 case TSS_MAD:
+					 Error[Errors_count] = MAD_Calc(t_block, t_1_block);
+					 break;
+				 case TSS_PSNR:
+					 Error[Errors_count] = PSNR_Calc(t_block, t_1_block);
+					 break;
+
+				 default:
+					 _ASSERT(false);
+					 break;
+				 }
+				 Errors_count++;
+			 }
+			 /*Select min Error Pos */
+			 for (uint8_t err_idx = 0; err_idx < Errors_count; err_idx++) {
+				 if (Error[err_idx] < min_error) {
+					 min_error = Error[err_idx];
+					 min_error_idx = err_idx;
+				 }
+			 }
+			 min_pos.x += tss_conf->step[j] * loop_pos[min_error_idx].x;
+			 min_pos.y += tss_conf->step[j] * loop_pos[min_error_idx].y;
+			 if (min_pos.x > 7 || min_pos.y > 7)
+			 {
+				 min_pos.x += tss_conf->step[j] * loop_pos[min_error_idx].x;
+			 }
+		}
+		/* motion vector of this block */
+		motion_vector.block_motion_vector_array[motion_idx].offset.x = min_pos.x;
+		motion_vector.block_motion_vector_array[motion_idx].offset.y = min_pos.y;
+		motion_vector.block_motion_vector_array[motion_idx].Error = min_error;
+		motion_idx++;
 	 }
-
 }
 
 void tss::get_block(uint32_t offset, int16_t* block, image* image_input) {
